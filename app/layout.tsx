@@ -15,6 +15,14 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.png",
   },
+  other: {
+    "google-fonts":
+      "https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap",
+    "google-fonts-preconnect": [
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+    ],
+  },
 };
 
 export default function RootLayout({
