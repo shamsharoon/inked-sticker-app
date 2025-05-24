@@ -20,14 +20,14 @@ export default function AppDashboard() {
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
           Welcome to{" "}
-          <span className="bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-200 bg-clip-text text-transparent">
             Inked
           </span>
           , {user?.user_metadata?.full_name || "Creator"}!
         </h1>
         <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Generate custom stickers and order them in bulk. Turn your ideas into
-          reality with just a few clicks
+          reality with just a few clicks.
           <MousePointerClick className="inline-block h-5 w-5 text-blue-600 dark:text-blue-400 ml-1" />
         </p>
       </div>
