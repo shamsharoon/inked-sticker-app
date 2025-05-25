@@ -35,36 +35,11 @@ export function Navbar() {
 
         {user && (
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              asChild
-              className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              <Link href="/app/create" className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>Create</span>
-              </Link>
-            </Button>
-
-            <Button
-              variant="ghost"
-              asChild
-              className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              <Link href="/app/history" className="flex items-center space-x-2">
-                <History className="h-4 w-4" />
-                <span>History</span>
-              </Link>
-            </Button>
-
             <ModeToggle />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 rounded-full"
-                >
+                <div className="relative h-8 w-8 rounded-full cursor-pointer">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
                       src={user.user_metadata?.avatar_url || "/placeholder.svg"}
@@ -73,7 +48,7 @@ export function Navbar() {
                       <User className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
