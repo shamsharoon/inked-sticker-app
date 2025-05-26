@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Palette } from "lucide-react";
+import { Brush } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
@@ -110,9 +110,9 @@ export default function SignInPage() {
       <Card className="w-full max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Palette className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+            <Brush className="h-12 w-12 text-blue-600 dark:text-blue-400" />
           </div>
-          <CardTitle className="text-2xl text-slate-900 dark:text-white">
+          <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-200 bg-clip-text text-transparent">
             Welcome to Inked
           </CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">
