@@ -1,100 +1,109 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { createClient } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/hooks/use-toast"
-import { Palette } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { createClient } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Palette } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
-  const router = useRouter()
-  const supabase = createClient()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Success",
         description: "Signed in successfully!",
-      })
-      router.push("/app")
+      });
+      router.push("/app");
     }
 
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-    })
+    });
 
     if (error) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Success",
         description: "Check your email for the confirmation link!",
-      })
+      });
     }
 
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-    })
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
 
     if (error) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Success",
         description: "Check your email for the magic link!",
-      })
+      });
     }
 
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900 p-4">
@@ -103,7 +112,9 @@ export default function SignInPage() {
           <div className="flex justify-center mb-4">
             <Palette className="h-12 w-12 text-blue-600 dark:text-blue-400" />
           </div>
-          <CardTitle className="text-2xl text-slate-900 dark:text-white">Welcome to Inked</CardTitle>
+          <CardTitle className="text-2xl text-slate-900 dark:text-white">
+            Welcome to Inked
+          </CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">
             Sign in to start generating custom stickers with AI
           </CardDescription>
@@ -128,7 +139,10 @@ export default function SignInPage() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">
+                  <Label
+                    htmlFor="email"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
                     Email
                   </Label>
                   <Input
@@ -142,7 +156,10 @@ export default function SignInPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">
+                  <Label
+                    htmlFor="password"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
                     Password
                   </Label>
                   <Input
@@ -155,7 +172,11 @@ export default function SignInPage() {
                     className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
@@ -186,7 +207,10 @@ export default function SignInPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-slate-700 dark:text-slate-300">
+                  <Label
+                    htmlFor="signup-email"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
                     Email
                   </Label>
                   <Input
@@ -200,7 +224,10 @@ export default function SignInPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-slate-700 dark:text-slate-300">
+                  <Label
+                    htmlFor="signup-password"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
                     Password
                   </Label>
                   <Input
@@ -213,7 +240,11 @@ export default function SignInPage() {
                     className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
                   {loading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>
@@ -222,5 +253,5 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

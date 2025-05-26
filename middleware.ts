@@ -23,6 +23,11 @@ export async function middleware(req: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL("/signin", req.url));
     }
+
+    // Clean up URL if there's a code parameter
+    if (req.nextUrl.searchParams.has("code")) {
+      return NextResponse.redirect(new URL("/app", req.url));
+    }
   }
 
   // Redirect authenticated users away from signin
