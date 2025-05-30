@@ -3,8 +3,6 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/supabase";
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -45,26 +43,34 @@ export async function POST(request: NextRequest) {
       throw new Error("No images generated");
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // Save images and prepare database entries
+    // Save images to Supabase Storage and prepare database entries
     const designInserts = await Promise.all(
       response.data.map(async (image, index) => {
         const filename = `design_${orderId}_${Date.now()}_${index}.png`;
-        const filepath = path.join(uploadsDir, filename);
+        const filePath = `${user.id}/${orderId}/${filename}`;
 
-        // Save the image file
+        // Convert base64 to buffer and upload to Supabase Storage
         const imageBytes = Buffer.from(image.b64_json!, "base64");
-        fs.writeFileSync(filepath, imageBytes);
+        const { error: uploadError } = await supabase.storage
+          .from("designs")
+          .upload(filePath, imageBytes, {
+            contentType: "image/png",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Get the public URL for the uploaded image
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("designs").getPublicUrl(filePath);
 
         // Return the database entry
         return {
           order_id: orderId,
-          image_url: `/uploads/${filename}`,
+          image_url: publicUrl,
           openai_image_id: `gpt_image_${Date.now()}_${index}`,
         };
       })
