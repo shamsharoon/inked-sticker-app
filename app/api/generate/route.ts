@@ -1,20 +1,27 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import type { Database } from "@/lib/supabase"
+import { type NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import type { Database } from "@/lib/supabase";
+import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { orderId, prompt, width, height, quantity } = await request.json()
+    const { orderId, prompt, width, height, quantity } = await request.json();
 
-    const supabase = createRouteHandlerClient<Database>({ cookies })
+    const supabase = createRouteHandlerClient<Database>({ cookies });
 
     // Verify the order exists and belongs to the authenticated user
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { data: order, error: orderError } = await supabase
@@ -22,57 +29,85 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("id", orderId)
       .eq("user_id", user.id)
-      .single()
+      .single();
 
     if (orderError || !order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // TODO: Replace with actual OpenAI API call
-    // For now, we'll simulate the generation process
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Generate images using GPT Image
+    const response = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt,
+    });
 
-    // Generate mock designs (replace with actual OpenAI DALL-E integration)
-    const mockDesigns = [
-      "https://picsum.photos/400/400?random=1",
-      "https://picsum.photos/400/400?random=2",
-      "https://picsum.photos/400/400?random=3",
-    ]
+    if (!response.data || response.data.length === 0) {
+      throw new Error("No images generated");
+    }
 
-    // Save generated designs to database
-    const designInserts = mockDesigns.map((imageUrl) => ({
-      order_id: orderId,
-      image_url: imageUrl,
-      openai_image_id: `mock_${Date.now()}_${Math.random()}`,
-    }))
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
 
-    const { error: designError } = await supabase.from("designs").insert(designInserts)
+    // Save images and prepare database entries
+    const designInserts = await Promise.all(
+      response.data.map(async (image, index) => {
+        const filename = `design_${orderId}_${Date.now()}_${index}.png`;
+        const filepath = path.join(uploadsDir, filename);
+
+        // Save the image file
+        const imageBytes = Buffer.from(image.b64_json!, "base64");
+        fs.writeFileSync(filepath, imageBytes);
+
+        // Return the database entry
+        return {
+          order_id: orderId,
+          image_url: `/uploads/${filename}`,
+          openai_image_id: `gpt_image_${Date.now()}_${index}`,
+        };
+      })
+    );
+
+    const { error: designError } = await supabase
+      .from("designs")
+      .insert(designInserts);
 
     if (designError) {
-      throw designError
+      throw designError;
     }
 
     // Update order status to completed
-    await supabase.from("orders").update({ status: "completed" }).eq("id", orderId)
+    await supabase
+      .from("orders")
+      .update({ status: "completed" })
+      .eq("id", orderId);
 
     return NextResponse.json({
       success: true,
       designs: designInserts.length,
       message: "Designs generated successfully",
-    })
+    });
   } catch (error) {
-    console.error("Generation error:", error)
+    console.error("Generation error:", error);
 
     // Update order status to failed if there was an error
     try {
-      const body = await request.clone().json()
-      const { orderId } = body
-      const supabase = createRouteHandlerClient<Database>({ cookies })
-      await supabase.from("orders").update({ status: "failed" }).eq("id", orderId)
+      const body = await request.clone().json();
+      const { orderId } = body;
+      const supabase = createRouteHandlerClient<Database>({ cookies });
+      await supabase
+        .from("orders")
+        .update({ status: "failed" })
+        .eq("id", orderId);
     } catch (e) {
-      console.error("Failed to update order status:", e)
+      console.error("Failed to update order status:", e);
     }
 
-    return NextResponse.json({ error: "Failed to generate designs" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to generate designs" },
+      { status: 500 }
+    );
   }
 }
