@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import type { Database } from "@/lib/supabase";
 import OpenAI from "openai";
 
+// Configure the route to handle POST requests
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -82,7 +86,7 @@ async function generateDesigns(
 
   // Save images to Supabase Storage and prepare database entries
   const designInserts = await Promise.all(
-    response.data.map(async (image, index) => {
+    response.data.map(async (image: { b64_json?: string }, index: number) => {
       const filename = `design_${orderId}_${Date.now()}_${index}.png`;
       const filePath = `${userId}/${orderId}/${filename}`;
 
