@@ -38,6 +38,9 @@ interface Order {
 export default function HistoryPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 5;
   const { user } = useAuth();
   const supabase = createClient();
 
@@ -45,18 +48,27 @@ export default function HistoryPage() {
     if (user) {
       fetchOrders();
     }
-  }, [user]);
+  }, [user, page]);
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error, count } = await supabase
         .from("orders")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
-      setOrders(data || []);
+
+      setOrders((prev) =>
+        page === 1 ? data || [] : [...prev, ...(data || [])]
+      );
+      setHasMore((data?.length || 0) === ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
@@ -85,7 +97,7 @@ export default function HistoryPage() {
       : text;
   };
 
-  if (loading) {
+  if (loading && page === 1) {
     return (
       <div className="space-y-4">
         <div className="h-8 bg-gray-200 rounded animate-pulse" />
@@ -133,7 +145,7 @@ export default function HistoryPage() {
           <CardHeader>
             <CardTitle>Your Orders</CardTitle>
             <CardDescription>
-              {orders.length} order{orders.length !== 1 ? "s" : ""} found
+              Showing {orders.length} order{orders.length !== 1 ? "s" : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -181,6 +193,17 @@ export default function HistoryPage() {
                 ))}
               </TableBody>
             </Table>
+            {hasMore && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : "Load More"}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
