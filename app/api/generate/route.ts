@@ -15,8 +15,10 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     const { orderId, prompt, width, height, quantity } = await request.json();
-
-    const supabase = createRouteHandlerClient<Database>({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => cookieStore,
+    });
 
     // Verify the order exists and belongs to the authenticated user
     const {
