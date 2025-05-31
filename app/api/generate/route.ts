@@ -27,14 +27,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Start the generation process immediately and return response
-    generateDesigns(orderId, prompt, user.id, supabase).catch((error) => {
+    generateDesigns(orderId, prompt, user.id, supabase).catch(async (error) => {
       console.error("Generation error:", error);
-      // Update order status to failed if there was an error
-      supabase
-        .from("orders")
-        .update({ status: "failed" })
-        .eq("id", orderId)
-        .catch(console.error);
+      try {
+        // Update order status to failed if there was an error
+        await supabase
+          .from("orders")
+          .update({ status: "failed" })
+          .eq("id", orderId);
+      } catch (updateError) {
+        console.error("Failed to update order status:", updateError);
+      }
     });
 
     return NextResponse.json({
@@ -63,14 +66,14 @@ async function generateDesigns(
       .update({ status: "generating" })
       .eq("id", orderId);
 
-    // Generate images using GPT Image with timeout
+    // Generate images using GPT Image with increased timeout
     const response = await Promise.race([
       openai.images.generate({
         model: "gpt-image-1",
         prompt,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Image generation timed out")), 30000)
+        setTimeout(() => reject(new Error("Image generation timed out")), 60000)
       ),
     ]);
 
@@ -134,11 +137,15 @@ async function generateDesigns(
       .eq("id", orderId);
   } catch (error) {
     console.error("Error in generateDesigns:", error);
-    // Update order status to failed
-    await supabase
-      .from("orders")
-      .update({ status: "failed" })
-      .eq("id", orderId);
+    try {
+      // Update order status to failed
+      await supabase
+        .from("orders")
+        .update({ status: "failed" })
+        .eq("id", orderId);
+    } catch (updateError) {
+      console.error("Failed to update order status:", updateError);
+    }
     throw error;
   }
 }
