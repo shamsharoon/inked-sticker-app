@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,12 @@ export default function ResultsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPolling, setIsPolling] = useState(false);
   const [ordering, setOrdering] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const hasShownToast = useRef(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -43,7 +48,24 @@ export default function ResultsPage() {
       return;
     }
 
+    // Reset toast state when component mounts
+    hasShownToast.current = false;
+
+    // Initial fetch
     fetchOrderAndDesigns();
+
+    // Set up polling
+    const interval = setInterval(() => {
+      fetchOrderAndDesigns();
+    }, 2000);
+
+    setPollingInterval(interval);
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [orderId]);
 
   const fetchOrderAndDesigns = async () => {
@@ -56,16 +78,53 @@ export default function ResultsPage() {
         .single();
 
       if (orderError) throw orderError;
+
+      // Update order state
       setOrder(orderData);
+      setIsPolling(orderData.status === "generating");
 
-      // Fetch designs
-      const { data: designsData, error: designsError } = await supabase
-        .from("designs")
-        .select("*")
-        .eq("order_id", orderId);
+      // If order is completed, fetch designs
+      if (orderData.status === "completed") {
+        const { data: designsData, error: designsError } = await supabase
+          .from("designs")
+          .select("*")
+          .eq("order_id", orderId);
 
-      if (designsError) throw designsError;
-      setDesigns(designsData || []);
+        if (designsError) throw designsError;
+
+        // If we have designs, update the state and stop polling
+        if (designsData && designsData.length > 0) {
+          setDesigns(designsData);
+          setIsPolling(false);
+
+          // Stop polling
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+
+          // Show success toast only if we haven't shown it before
+          if (!hasShownToast.current) {
+            toast({
+              title: "Success",
+              description: "Your designs are ready!",
+            });
+            hasShownToast.current = true;
+          }
+        }
+      } else if (orderData.status === "failed") {
+        // Stop polling if the order failed
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        setIsPolling(false);
+        toast({
+          title: "Error",
+          description: "Failed to generate designs. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -228,7 +287,7 @@ export default function ResultsPage() {
         </CardContent>
       </Card>
 
-      {order.status === "generating" && (
+      {order?.status === "generating" && (
         <Card>
           <CardContent className="flex items-center justify-center py-8">
             <div className="text-center space-y-4">

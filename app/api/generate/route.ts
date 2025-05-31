@@ -33,87 +33,97 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Generate images using GPT Image
-    const response = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt,
-    });
-
-    if (!response.data || response.data.length === 0) {
-      throw new Error("No images generated");
-    }
-
-    // Save images to Supabase Storage and prepare database entries
-    const designInserts = await Promise.all(
-      response.data.map(async (image, index) => {
-        const filename = `design_${orderId}_${Date.now()}_${index}.png`;
-        const filePath = `${user.id}/${orderId}/${filename}`;
-
-        // Convert base64 to buffer and upload to Supabase Storage
-        const imageBytes = Buffer.from(image.b64_json!, "base64");
-        const { error: uploadError } = await supabase.storage
-          .from("designs")
-          .upload(filePath, imageBytes, {
-            contentType: "image/png",
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        // Get the public URL for the uploaded image
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("designs").getPublicUrl(filePath);
-
-        // Return the database entry
-        return {
-          order_id: orderId,
-          image_url: publicUrl,
-          openai_image_id: `gpt_image_${Date.now()}_${index}`,
-        };
-      })
-    );
-
-    const { error: designError } = await supabase
-      .from("designs")
-      .insert(designInserts);
-
-    if (designError) {
-      throw designError;
-    }
-
-    // Update order status to completed
+    // Update order status to generating
     await supabase
       .from("orders")
-      .update({ status: "completed" })
+      .update({ status: "generating" })
       .eq("id", orderId);
+
+    // Start the generation process asynchronously
+    generateDesigns(orderId, prompt, user.id).catch((error) => {
+      console.error("Generation error:", error);
+      // Update order status to failed if there was an error
+      supabase
+        .from("orders")
+        .update({ status: "failed" })
+        .eq("id", orderId)
+        .catch(console.error);
+    });
 
     return NextResponse.json({
       success: true,
-      designs: designInserts.length,
-      message: "Designs generated successfully",
+      message: "Design generation started",
     });
   } catch (error) {
     console.error("Generation error:", error);
-
-    // Update order status to failed if there was an error
-    try {
-      const body = await request.clone().json();
-      const { orderId } = body;
-      const supabase = createRouteHandlerClient<Database>({ cookies });
-      await supabase
-        .from("orders")
-        .update({ status: "failed" })
-        .eq("id", orderId);
-    } catch (e) {
-      console.error("Failed to update order status:", e);
-    }
-
     return NextResponse.json(
-      { error: "Failed to generate designs" },
+      { error: "Failed to start design generation" },
       { status: 500 }
     );
   }
+}
+
+async function generateDesigns(
+  orderId: string,
+  prompt: string,
+  userId: string
+) {
+  const supabase = createRouteHandlerClient<Database>({ cookies });
+
+  // Generate images using GPT Image
+  const response = await openai.images.generate({
+    model: "gpt-image-1",
+    prompt,
+  });
+
+  if (!response.data || response.data.length === 0) {
+    throw new Error("No images generated");
+  }
+
+  // Save images to Supabase Storage and prepare database entries
+  const designInserts = await Promise.all(
+    response.data.map(async (image, index) => {
+      const filename = `design_${orderId}_${Date.now()}_${index}.png`;
+      const filePath = `${userId}/${orderId}/${filename}`;
+
+      // Convert base64 to buffer and upload to Supabase Storage
+      const imageBytes = Buffer.from(image.b64_json!, "base64");
+      const { error: uploadError } = await supabase.storage
+        .from("designs")
+        .upload(filePath, imageBytes, {
+          contentType: "image/png",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL for the uploaded image
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("designs").getPublicUrl(filePath);
+
+      // Return the database entry
+      return {
+        order_id: orderId,
+        image_url: publicUrl,
+        openai_image_id: `gpt_image_${Date.now()}_${index}`,
+      };
+    })
+  );
+
+  const { error: designError } = await supabase
+    .from("designs")
+    .insert(designInserts);
+
+  if (designError) {
+    throw designError;
+  }
+
+  // Update order status to completed
+  await supabase
+    .from("orders")
+    .update({ status: "completed" })
+    .eq("id", orderId);
 }
