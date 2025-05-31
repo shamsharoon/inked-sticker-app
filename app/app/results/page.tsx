@@ -41,6 +41,7 @@ export default function ResultsPage() {
   const { toast } = useToast();
   const supabase = createClient();
   const orderId = searchParams.get("orderId");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -54,21 +55,32 @@ export default function ResultsPage() {
     // Initial fetch
     fetchOrderAndDesigns();
 
-    // Set up polling
+    // Set up polling only if order is not completed
     const interval = setInterval(() => {
+      if (order?.status === "completed" || order?.status === "failed") {
+        clearInterval(interval);
+        return;
+      }
       fetchOrderAndDesigns();
-    }, 2000);
+    }, 5000); // Increased to 5 seconds to reduce load
 
     setPollingInterval(interval);
 
+    // Cleanup function
     return () => {
       if (interval) {
         clearInterval(interval);
       }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
     };
-  }, [orderId]);
+  }, [orderId, order?.status]);
 
   const fetchOrderAndDesigns = async () => {
+    if (isRefreshing) return; // Prevent multiple simultaneous refreshes
+
+    setIsRefreshing(true);
     try {
       // Fetch order details
       const { data: orderData, error: orderError } = await supabase
@@ -136,6 +148,7 @@ export default function ResultsPage() {
       });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -297,9 +310,17 @@ export default function ResultsPage() {
             <div className="text-center space-y-4">
               <Loader2 className="h-8 w-8 animate-spin mx-auto" />
               <p>Initializing design generation...</p>
-              <Button variant="outline" onClick={fetchOrderAndDesigns}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+              <Button
+                variant="outline"
+                onClick={fetchOrderAndDesigns}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </Button>
             </div>
           </CardContent>
@@ -312,9 +333,17 @@ export default function ResultsPage() {
             <div className="text-center space-y-4">
               <Loader2 className="h-8 w-8 animate-spin mx-auto" />
               <p>Generating your designs...</p>
-              <Button variant="outline" onClick={fetchOrderAndDesigns}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+              <Button
+                variant="outline"
+                onClick={fetchOrderAndDesigns}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </Button>
             </div>
           </CardContent>
