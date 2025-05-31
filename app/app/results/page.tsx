@@ -81,7 +81,9 @@ export default function ResultsPage() {
 
       // Update order state
       setOrder(orderData);
-      setIsPolling(orderData.status === "generating");
+      setIsPolling(
+        orderData.status === "generating" || orderData.status === "pending"
+      );
 
       // If order is completed, fetch designs
       if (orderData.status === "completed") {
@@ -247,6 +249,8 @@ export default function ResultsPage() {
         return "bg-red-500";
       case "ordered":
         return "bg-blue-500";
+      case "pending":
+        return "bg-gray-500";
       default:
         return "bg-gray-500";
     }
@@ -286,6 +290,21 @@ export default function ResultsPage() {
           </p>
         </CardContent>
       </Card>
+
+      {order?.status === "pending" && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+              <p>Initializing design generation...</p>
+              <Button variant="outline" onClick={fetchOrderAndDesigns}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {order?.status === "generating" && (
         <Card>

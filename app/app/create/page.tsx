@@ -59,31 +59,77 @@ export default function CreatePage() {
           width,
           height,
           quantity,
-          status: "generating",
+          status: "pending",
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Call API to generate designs first
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: order.id,
-          prompt,
-          width,
-          height,
-          quantity,
-        }),
-      });
+      // Call API to generate designs with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      let response;
 
-      if (!response.ok) {
-        throw new Error("Failed to generate designs");
+      while (retryCount < maxRetries) {
+        try {
+          response = await fetch("/api/generate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              prompt,
+              width,
+              height,
+              quantity,
+            }),
+          });
+
+          // Check if response is ok and has valid JSON
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(
+              errorData?.error || `HTTP error! status: ${response.status}`
+            );
+          }
+
+          const responseData = await response.json();
+
+          // Validate the response data
+          if (!responseData.success) {
+            throw new Error(responseData.error || "API call failed");
+          }
+
+          // If we get here, the API call was successful
+          break;
+        } catch (error: any) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            // Update order status to failed if all retries failed
+            await supabase
+              .from("orders")
+              .update({ status: "failed" })
+              .eq("id", order.id);
+            throw new Error(
+              `Failed to generate designs after ${maxRetries} attempts: ${
+                error.message || "Unknown error"
+              }`
+            );
+          }
+          // Wait before retrying (exponential backoff)
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+          );
+        }
       }
+
+      // Update order status to generating after successful API call
+      await supabase
+        .from("orders")
+        .update({ status: "generating" })
+        .eq("id", order.id);
 
       // Upload files to Supabase Storage after design generation
       if (files.length > 0) {
