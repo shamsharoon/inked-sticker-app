@@ -6,8 +6,20 @@ import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Download, ShoppingCart, Loader2, RefreshCw } from "lucide-react";
+import { Download, ShoppingCart, Loader2, RefreshCw, Copy } from "lucide-react";
 import Image from "next/image";
 
 interface Order {
@@ -35,6 +47,8 @@ export default function ResultsPage() {
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const hasShownToast = useRef(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -172,6 +186,34 @@ export default function ResultsPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCopyImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob,
+        }),
+      ]);
+      toast({
+        title: "Success",
+        description: "Image copied to clipboard!",
+      });
+    } catch (error) {
+      console.error("Failed to copy image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to copy image to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsModalOpen(true);
   };
 
   const downloadAll = async () => {
@@ -397,21 +439,85 @@ export default function ResultsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
-                    <Image
-                      src={design.image_url || "/placeholder.svg"}
-                      alt={`Design ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      onError={(e) => {
-                        // Fallback to placeholder if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
-                      loading="lazy"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                        <Image
+                          src={design.image_url || "/placeholder.svg"}
+                          alt={`Design ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
+                      <DialogTitle className="sr-only">
+                        Design {index + 1} Preview
+                      </DialogTitle>
+                      <div className="relative">
+                        <img
+                          src={design.image_url || "/placeholder.svg"}
+                          alt={`Design ${index + 1}`}
+                          className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  onClick={() =>
+                                    downloadImage(
+                                      design.image_url,
+                                      `sticker-design-${index + 1}.png`
+                                    )
+                                  }
+                                  className="bg-background/90 hover:bg-background border border-border shadow-lg"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Download image</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  onClick={() =>
+                                    handleCopyImage(design.image_url)
+                                  }
+                                  className="bg-background/90 hover:bg-background border border-border shadow-lg"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Copy image</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     variant="outline"
                     className="w-full border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"

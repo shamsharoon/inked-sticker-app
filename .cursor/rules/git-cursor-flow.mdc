@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## CursorRules: Git Workflow
+
+1. **Stage all your changes**  
+   - Quickly stage everything you’ve worked on:  
+     ```bash
+     git add .
+     ```
+
+2. **Write a concise commit message**  
+   - Keep the title short (ideally ≤ 50 chars).  
+   - Begin with a **keyword** that signals the change type, for example:  
+     - `feat:` (new feature)  
+     - `fix:` (bug fix)  
+     - `docs:` (documentation)  
+     - `refactor:` (code cleanup)  
+     - `test:` (adding/updating tests)  
+   - Format:  
+     ```bash
+     git commit -m "feat: add user-profile endpoint"
+     ```
+
+3. **Push to remote**  
+   - Send your commit(s) up to GitHub on `master`:  
+     ```bash
+     git push origin master
+     ```
+
