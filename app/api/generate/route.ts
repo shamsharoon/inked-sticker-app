@@ -75,10 +75,14 @@ async function generateDesigns(
       .eq("id", orderId);
 
     // Generate image using OpenAI with increased timeout
+    const systemPrompt =
+      "You are a professional graphic designer specializing in sticker design. Create a vibrant, eye-catching sticker based on this prompt: " +
+      prompt +
+      ". The design should be: 1) Vector-style with clean lines and shapes, 2) Highly detailed while maintaining visual clarity, 3) Suitable for sticker printing with well-defined edges, 4) Cohesive and balanced composition, 5) Using colors that work well together and create visual impact, 6) Incorporating any specific elements mentioned in the prompt while ensuring they fit the sticker format. The final design should be a single, self-contained image that would look appealing when printed as a sticker.";
     const response = await Promise.race([
       openai.images.generate({
         model: "gpt-image-1",
-        prompt,
+        prompt: systemPrompt,
       }) as Promise<ImageGenerationResponse>,
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Image generation timed out")), 60000)
