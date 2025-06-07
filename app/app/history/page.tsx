@@ -107,31 +107,34 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Order History</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Order History
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View and manage your sticker orders
           </p>
         </div>
-        <Button asChild>
+        <Button asChild size="sm" className="w-fit sm:w-auto">
           <Link href="/app/create">
             <Plus className="mr-2 h-4 w-4" />
-            Create New Order
+            <span className="hidden sm:inline">Create New Order</span>
+            <span className="sm:hidden">New Order</span>
           </Link>
         </Button>
       </div>
 
       {orders.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-12">
+          <CardContent className="text-center py-8 sm:py-12">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">No orders yet</h3>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Start creating your first custom sticker design!
               </p>
-              <Button asChild>
+              <Button asChild size="sm">
                 <Link href="/app/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Your First Order
@@ -143,62 +146,126 @@ export default function HistoryPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Your Orders</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Your Orders</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
               Showing {orders.length} order{orders.length !== 1 ? "s" : ""}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Prompt</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs">
-                        {truncateText(order.prompt, 50)}
+          <CardContent className="p-0 sm:p-6">
+            {/* Mobile Card Layout */}
+            <div className="sm:hidden space-y-4 p-4">
+              {orders.map((order) => (
+                <Card
+                  key={order.id}
+                  className="border border-slate-200 dark:border-slate-700"
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                          {truncateText(order.prompt, 40)}
+                        </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {order.width} × {order.height}
-                    </TableCell>
-                    <TableCell>{order.quantity}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(order.status)}>
+                      <Badge
+                        className={`${getStatusColor(
+                          order.status
+                        )} ml-2 text-xs`}
+                      >
                         {order.status.charAt(0).toUpperCase() +
                           order.status.slice(1)}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/app/results?orderId=${order.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Results
-                        </Link>
-                      </Button>
-                    </TableCell>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400">
+                      <div>
+                        <span className="font-medium">Size:</span> {order.width}{" "}
+                        × {order.height}
+                      </div>
+                      <div>
+                        <span className="font-medium">Qty:</span>{" "}
+                        {order.quantity}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="w-full text-xs"
+                    >
+                      <Link href={`/app/results?orderId=${order.id}`}>
+                        <Eye className="mr-1 h-3 w-3" />
+                        View Results
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop Table Layout */}
+            <div className="hidden sm:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-sm">Date</TableHead>
+                    <TableHead className="text-sm">Prompt</TableHead>
+                    <TableHead className="text-sm">Size</TableHead>
+                    <TableHead className="text-sm">Quantity</TableHead>
+                    <TableHead className="text-sm">Status</TableHead>
+                    <TableHead className="text-sm">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="text-sm">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs text-sm">
+                          {truncateText(order.prompt, 50)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {order.width} × {order.height}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {order.quantity}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`${getStatusColor(order.status)} text-xs`}
+                        >
+                          {order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/app/results?orderId=${order.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span className="hidden lg:inline">
+                              View Results
+                            </span>
+                            <span className="lg:hidden">View</span>
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {hasMore && (
-              <div className="mt-4 flex justify-center">
+              <div className="mt-4 flex justify-center p-4 sm:p-0">
                 <Button
                   variant="outline"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={loading}
+                  size="sm"
+                  className="text-sm"
                 >
                   {loading ? "Loading..." : "Load More"}
                 </Button>

@@ -10,6 +10,21 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Mobile-friendly utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Better mobile tap targets */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 @layer base {
@@ -91,5 +106,30 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    /* Better mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better touch targets for mobile */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply touch-manipulation;
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Better mobile typography */
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
   }
 }

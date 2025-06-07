@@ -63,9 +63,6 @@ export default function ResultsPage() {
       return;
     }
 
-    // Reset toast state when component mounts
-    hasShownToast.current = false;
-
     // Initial fetch
     fetchOrderAndDesigns();
 
@@ -131,13 +128,18 @@ export default function ResultsPage() {
             setPollingInterval(null);
           }
 
-          // Show success toast only if we haven't shown it before
-          if (!hasShownToast.current) {
+          // Check if we've already shown the toast for this order
+          const toastKey = `toast-shown-${orderId}`;
+          const hasShownToastForOrder = localStorage.getItem(toastKey);
+
+          // Show success toast only if we haven't shown it for this specific order
+          if (!hasShownToastForOrder && !hasShownToast.current) {
             toast({
               title: "Success",
               description: "Your designs are ready!",
             });
             hasShownToast.current = true;
+            localStorage.setItem(toastKey, "true");
           }
         }
       } else if (orderData.status === "failed") {
@@ -277,23 +279,6 @@ export default function ResultsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!order) {
-    return (
-      <div className="text-center space-y-4">
-        <h1 className="text-2xl font-bold">Order not found</h1>
-        <Button onClick={() => router.push("/app")}>Back to Dashboard</Button>
-      </div>
-    );
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -311,29 +296,46 @@ export default function ResultsPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="text-center space-y-4">
+        <h1 className="text-2xl font-bold">Order not found</h1>
+        <Button onClick={() => router.push("/app")}>Back to Dashboard</Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-3xl text-slate-900 dark:text-white font-bold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl text-slate-900 dark:text-white font-bold tracking-tight">
             Design Results
           </h1>
-          <p className="text-slate-700 dark:text-slate-500">
+          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-500">
             Generated on {new Date(order.created_at).toLocaleDateString()}
           </p>
         </div>
-        <Badge className={getStatusColor(order.status)}>
+        <Badge className={`${getStatusColor(order.status)} w-fit`}>
           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
         </Badge>
       </div>
 
       <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-white">
+          <CardTitle className="text-lg sm:text-xl text-slate-900 dark:text-white">
             Order Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-slate-700 dark:text-slate-300">
+        <CardContent className="space-y-2 text-sm sm:text-base text-slate-700 dark:text-slate-300">
           <p>
             <strong>Prompt:</strong> {order.prompt}
           </p>
@@ -348,14 +350,18 @@ export default function ResultsPage() {
 
       {order?.status === "pending" && (
         <Card>
-          <CardContent className="flex items-center justify-center py-8">
+          <CardContent className="flex items-center justify-center py-6 sm:py-8">
             <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-              <p>Initializing design generation...</p>
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin mx-auto" />
+              <p className="text-sm sm:text-base">
+                Initializing design generation...
+              </p>
               <Button
                 variant="outline"
                 onClick={fetchOrderAndDesigns}
                 disabled={isRefreshing}
+                size="sm"
+                className="text-sm"
               >
                 {isRefreshing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -371,14 +377,16 @@ export default function ResultsPage() {
 
       {order?.status === "generating" && (
         <Card>
-          <CardContent className="flex items-center justify-center py-8">
+          <CardContent className="flex items-center justify-center py-6 sm:py-8">
             <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-              <p>Generating your designs...</p>
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin mx-auto" />
+              <p className="text-sm sm:text-base">Generating your designs...</p>
               <Button
                 variant="outline"
                 onClick={fetchOrderAndDesigns}
                 disabled={isRefreshing}
+                size="sm"
+                className="text-sm"
               >
                 {isRefreshing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -394,15 +402,16 @@ export default function ResultsPage() {
 
       {designs.length > 0 && (
         <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white">
               Generated Designs
             </h2>
-            <div className="space-x-2">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
               <Button
                 variant="outline"
                 onClick={downloadAll}
-                className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm sm:text-base"
+                size="sm"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download All
@@ -410,7 +419,8 @@ export default function ResultsPage() {
               <Button
                 onClick={orderStickers}
                 disabled={ordering}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base"
+                size="sm"
               >
                 {ordering ? (
                   <>
@@ -427,18 +437,18 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {designs.map((design, index) => (
               <Card
                 key={design.id}
                 className="overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
               >
-                <CardHeader>
-                  <CardTitle className="text-lg text-slate-900 dark:text-white">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-white">
                     Design {index + 1}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   <Dialog>
                     <DialogTrigger asChild>
                       <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
@@ -453,11 +463,11 @@ export default function ResultsPage() {
                             target.src = "/placeholder.svg";
                           }}
                           loading="lazy"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       </div>
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
+                    <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden p-2 sm:p-6">
                       <DialogTitle className="sr-only">
                         Design {index + 1} Preview
                       </DialogTitle>
@@ -465,13 +475,13 @@ export default function ResultsPage() {
                         <img
                           src={design.image_url || "/placeholder.svg"}
                           alt={`Design ${index + 1}`}
-                          className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                          className="w-full h-auto max-h-[80vh] sm:max-h-[70vh] object-contain rounded-lg"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = "/placeholder.svg";
                           }}
                         />
-                        <div className="absolute top-4 right-4 flex gap-2">
+                        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -484,9 +494,9 @@ export default function ResultsPage() {
                                       `sticker-design-${index + 1}.png`
                                     )
                                   }
-                                  className="bg-background/90 hover:bg-background border border-border shadow-lg"
+                                  className="bg-background/90 hover:bg-background border border-border shadow-lg h-8 w-8 sm:h-10 sm:w-10"
                                 >
-                                  <Download className="h-4 w-4" />
+                                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -504,9 +514,9 @@ export default function ResultsPage() {
                                   onClick={() =>
                                     handleCopyImage(design.image_url)
                                   }
-                                  className="bg-background/90 hover:bg-background border border-border shadow-lg"
+                                  className="bg-background/90 hover:bg-background border border-border shadow-lg h-8 w-8 sm:h-10 sm:w-10"
                                 >
-                                  <Copy className="h-4 w-4" />
+                                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -520,13 +530,14 @@ export default function ResultsPage() {
                   </Dialog>
                   <Button
                     variant="outline"
-                    className="w-full border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="w-full border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm"
                     onClick={() =>
                       downloadImage(
                         design.image_url,
                         `sticker-design-${index + 1}.png`
                       )
                     }
+                    size="sm"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download PNG
@@ -540,11 +551,11 @@ export default function ResultsPage() {
 
       {order.status === "failed" && (
         <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-red-600 mb-4">
+          <CardContent className="text-center py-6 sm:py-8">
+            <p className="text-red-600 mb-4 text-sm sm:text-base">
               Failed to generate designs. Please try again.
             </p>
-            <Button onClick={() => router.push("/app/create")}>
+            <Button onClick={() => router.push("/app/create")} size="sm">
               Create New Order
             </Button>
           </CardContent>
