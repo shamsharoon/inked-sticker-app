@@ -45,128 +45,61 @@ export default function CreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!prompt || !user) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a prompt.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
 
     try {
-      // Create order in database
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
+      // The only task is to call the new job-creation endpoint.
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           prompt,
-          width,
-          height,
-          quantity,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Call API to generate designs with retry logic
-      let retryCount = 0;
-      const maxRetries = 3;
-      let response;
-
-      while (retryCount < maxRetries) {
-        try {
-          response = await fetch("/api/generate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              orderId: order.id,
-              prompt,
-              width,
-              height,
-              quantity,
-            }),
-          });
-
-          // Check if response is ok and has valid JSON
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(
-              errorData?.error || `HTTP error! status: ${response.status}`
-            );
-          }
-
-          const responseData = await response.json();
-
-          // Validate the response data
-          if (!responseData.success) {
-            throw new Error(responseData.error || "API call failed");
-          }
-
-          // If we get here, the API call was successful
-          break;
-        } catch (error: any) {
-          retryCount++;
-          if (retryCount === maxRetries) {
-            // Update order status to failed if all retries failed
-            await supabase
-              .from("orders")
-              .update({ status: "failed" })
-              .eq("id", order.id);
-            throw new Error(
-              `Failed to generate designs after ${maxRetries} attempts: ${
-                error.message || "Unknown error"
-              }`
-            );
-          }
-          // Wait before retrying (exponential backoff)
-          await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-          );
-        }
-      }
-
-      // Update order status to generating after successful API call
-      await supabase
-        .from("orders")
-        .update({ status: "generating" })
-        .eq("id", order.id);
-
-      // Upload files to Supabase Storage after design generation
-      if (files.length > 0) {
-        const uploadPromises = files.map(async (file) => {
-          const fileExt = file.name.split(".").pop();
-          const fileName = `${order.id}/${Date.now()}.${fileExt}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from("uploads")
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          // Save file reference in database
-          await supabase.from("uploaded_images").insert({
-            order_id: order.id,
-            file_path: fileName,
-            file_name: file.name,
-            file_size: file.size,
-          });
-        });
-
-        await Promise.all(uploadPromises);
-      }
-
-      toast({
-        title: "Success!",
-        description:
-          "Your sticker designs are being generated. Redirecting to results...",
+          // Note: we are no longer sending orderId, width, height, etc.
+          // The new API route only needs the prompt to create a job.
+        }),
       });
 
-      router.push(`/app/results?orderId=${order.id}`);
+      if (!response.ok) {
+        // If the server returns a non-2xx response, handle it as an error.
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const { jobId } = await response.json();
+
+      if (!jobId) {
+        // This case should ideally not happen if the response was ok.
+        throw new Error("API did not return a job ID.");
+      }
+
+      toast({
+        title: "Job Queued!",
+        description: "Your sticker designs are being generated.",
+      });
+
+      // Redirect to a results page that can poll for the job status.
+      // For now, let's assume a /results page will handle polling.
+      router.push(`/app/results?jobId=${jobId}`);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error creating generation job:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred.";
       toast({
         title: "Error",
-        description: "Failed to create sticker order. Please try again.",
+        description: `Failed to start generation: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
