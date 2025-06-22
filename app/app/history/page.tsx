@@ -23,54 +23,48 @@ import {
 import { Eye, Plus } from "lucide-react";
 import Link from "next/link";
 
-interface Order {
+interface Job {
   id: string;
   prompt: string;
-  width: number;
-  height: number;
-  quantity: number;
   status: string;
-  total_cost: number | null;
-  print_partner_order_id: string | null;
   created_at: string;
 }
 
 export default function HistoryPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 10;
   const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      fetchJobs();
     }
   }, [user, page]);
 
-  const fetchOrders = async () => {
+  const fetchJobs = async () => {
+    if (!user) return;
     try {
       setLoading(true);
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data, error, count } = await supabase
-        .from("orders")
-        .select("*", { count: "exact" })
-        .eq("user_id", user?.id)
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("id, prompt, status, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .range(from, to);
 
       if (error) throw error;
 
-      setOrders((prev) =>
-        page === 1 ? data || [] : [...prev, ...(data || [])]
-      );
+      setJobs((prev) => (page === 1 ? data || [] : [...prev, ...(data || [])]));
       setHasMore((data?.length || 0) === ITEMS_PER_PAGE);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("Error fetching jobs:", error);
     } finally {
       setLoading(false);
     }
@@ -78,20 +72,19 @@ export default function HistoryPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
+      case "complete":
         return "bg-green-500";
-      case "generating":
+      case "processing":
         return "bg-yellow-500";
-      case "failed":
+      case "error":
         return "bg-red-500";
-      case "ordered":
-        return "bg-blue-500";
       default:
-        return "bg-gray-500";
+        return "bg-gray-500"; // for 'pending'
     }
   };
 
   const truncateText = (text: string, maxLength: number) => {
+    if (!text) return "";
     return text.length > maxLength
       ? text.substring(0, maxLength) + "..."
       : text;
@@ -100,7 +93,7 @@ export default function HistoryPage() {
   if (loading && page === 1) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
         <div className="h-64 bg-gray-200 rounded animate-pulse" />
       </div>
     );
@@ -111,33 +104,33 @@ export default function HistoryPage() {
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Order History
+            Generation History
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            View and manage your sticker orders
+            View your past design generations
           </p>
         </div>
         <Button asChild size="sm" className="w-fit sm:w-auto">
           <Link href="/app/create">
             <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Create New Order</span>
-            <span className="sm:hidden">New Order</span>
+            <span className="hidden sm:inline">Create New Design</span>
+            <span className="sm:hidden">New Design</span>
           </Link>
         </Button>
       </div>
 
-      {orders.length === 0 ? (
+      {jobs.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8 sm:py-12">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">No orders yet</h3>
+              <h3 className="text-lg font-semibold">No history yet</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Start creating your first custom sticker design!
+                Start by creating your first custom sticker design!
               </p>
               <Button asChild size="sm">
                 <Link href="/app/create">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Order
+                  Create Your First Design
                 </Link>
               </Button>
             </div>
@@ -146,47 +139,37 @@ export default function HistoryPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl">Your Orders</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">
+              Your Generations
+            </CardTitle>
             <CardDescription className="text-sm sm:text-base">
-              Showing {orders.length} order{orders.length !== 1 ? "s" : ""}
+              Showing {jobs.length} job{jobs.length !== 1 ? "s" : ""}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
             {/* Mobile Card Layout */}
             <div className="sm:hidden space-y-4 p-4">
-              {orders.map((order) => (
+              {jobs.map((job) => (
                 <Card
-                  key={order.id}
+                  key={job.id}
                   className="border border-slate-200 dark:border-slate-700"
                 >
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-900 dark:text-white">
-                          {new Date(order.created_at).toLocaleDateString()}
+                          {new Date(job.created_at).toLocaleDateString()}
                         </p>
                         <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
-                          {truncateText(order.prompt, 40)}
+                          {truncateText(job.prompt, 40)}
                         </p>
                       </div>
                       <Badge
-                        className={`${getStatusColor(
-                          order.status
-                        )} ml-2 text-xs`}
+                        className={`${getStatusColor(job.status)} ml-2 text-xs`}
                       >
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
+                        {job.status.charAt(0).toUpperCase() +
+                          job.status.slice(1)}
                       </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <div>
-                        <span className="font-medium">Size:</span> {order.width}{" "}
-                        × {order.height}
-                      </div>
-                      <div>
-                        <span className="font-medium">Qty:</span>{" "}
-                        {order.quantity}
-                      </div>
                     </div>
                     <Button
                       variant="outline"
@@ -194,7 +177,7 @@ export default function HistoryPage() {
                       asChild
                       className="w-full text-xs"
                     >
-                      <Link href={`/app/results?orderId=${order.id}`}>
+                      <Link href={`/app/results?jobId=${job.id}`}>
                         <Eye className="mr-1 h-3 w-3" />
                         View Results
                       </Link>
@@ -211,45 +194,36 @@ export default function HistoryPage() {
                   <TableRow>
                     <TableHead className="text-sm">Date</TableHead>
                     <TableHead className="text-sm">Prompt</TableHead>
-                    <TableHead className="text-sm">Size</TableHead>
-                    <TableHead className="text-sm">Quantity</TableHead>
                     <TableHead className="text-sm">Status</TableHead>
                     <TableHead className="text-sm">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
+                  {jobs.map((job) => (
+                    <TableRow key={job.id}>
                       <TableCell className="text-sm">
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {new Date(job.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="max-w-xs text-sm">
-                          {truncateText(order.prompt, 50)}
+                          {truncateText(job.prompt, 50)}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {order.width} × {order.height}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {order.quantity}
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={`${getStatusColor(order.status)} text-xs`}
+                          className={`${getStatusColor(job.status)} text-xs`}
                         >
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1)}
+                          {job.status.charAt(0).toUpperCase() +
+                            job.status.slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/app/results?orderId=${order.id}`}>
+                          <Link href={`/app/results?jobId=${job.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             <span className="hidden lg:inline">
                               View Results
                             </span>
-                            <span className="lg:hidden">View</span>
                           </Link>
                         </Button>
                       </TableCell>
@@ -259,13 +233,11 @@ export default function HistoryPage() {
               </Table>
             </div>
             {hasMore && (
-              <div className="mt-4 flex justify-center p-4 sm:p-0">
+              <div className="text-center p-4">
                 <Button
                   variant="outline"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={loading}
-                  size="sm"
-                  className="text-sm"
                 >
                   {loading ? "Loading..." : "Load More"}
                 </Button>
