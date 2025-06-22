@@ -29,20 +29,27 @@ export function SectionCards({ data }: { data: any[] }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-xs sm:text-sm pt-0">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <TrendingUpIcon className="size-4" />
+            Growing design library <TrendingUpIcon className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Visitors for the last 6 months
+            AI-generated designs this month
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader className="relative pb-2 sm:pb-4">
           <CardDescription className="text-xs sm:text-sm">
-            New Customers
+            Orders This Month
           </CardDescription>
           <CardTitle className="text-xl sm:text-2xl @[250px]/card:text-3xl font-semibold tabular-nums">
-            1,234
+            {
+              data.filter(
+                (order) =>
+                  order.createdAt >
+                  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+              ).length
+            }
+            {/* TODO: #12 add the createdAt data to the orders page */}
           </CardTitle>
           <div className="absolute right-3 sm:right-4 top-3 sm:top-4">
             <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
@@ -53,20 +60,25 @@ export function SectionCards({ data }: { data: any[] }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-xs sm:text-sm pt-0">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <TrendingDownIcon className="size-4" />
+            Seasonal dip expected <TrendingDownIcon className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Acquisition needs attention
+            Customer orders need boost
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader className="relative pb-2 sm:pb-4">
           <CardDescription className="text-xs sm:text-sm">
-            Active Accounts
+            Success Rate
           </CardDescription>
           <CardTitle className="text-xl sm:text-2xl @[250px]/card:text-3xl font-semibold tabular-nums">
-            45,678
+            {(
+              (data.filter((order) => order.status === "success").length /
+                data.length) *
+              100
+            ).toFixed(2)}
+            %{/* TODO: #12 add the status data to the orders page */}
           </CardTitle>
           <div className="absolute right-3 sm:right-4 top-3 sm:top-4">
             <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
@@ -77,31 +89,33 @@ export function SectionCards({ data }: { data: any[] }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-xs sm:text-sm pt-0">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <TrendingUpIcon className="size-4" />
+            AI performance excellent <TrendingUpIcon className="size-4" />
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">
+            High quality generation rate
+          </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader className="relative pb-2 sm:pb-4">
           <CardDescription className="text-xs sm:text-sm">
-            Growth Rate
+            Average Time to Complete
           </CardDescription>
           <CardTitle className="text-xl sm:text-2xl @[250px]/card:text-3xl font-semibold tabular-nums">
-            4.5%
+            1 m{/* TODO: #12 add the timeToComplete data to the orders page */}
           </CardTitle>
           <div className="absolute right-3 sm:right-4 top-3 sm:top-4">
             <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-              <TrendingUpIcon className="size-3" />
-              +4.5%
+              <TrendingUpIcon className="size-3" />+ 3%
+              {/* TODO: #12 add the timeToComplete data to the orders page */}
             </Badge>
           </div>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-xs sm:text-sm pt-0">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance <TrendingUpIcon className="size-4" />
+            Fast generation speed <TrendingUpIcon className="size-4" />
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground">Quick turnaround times</div>
         </CardFooter>
       </Card>
     </div>
