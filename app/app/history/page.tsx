@@ -1,6 +1,5 @@
-// TODO: #9 Fix React hooks error
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Plus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 interface Job {
@@ -33,22 +32,22 @@ interface Job {
 export default function HistoryPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const ITEMS_PER_PAGE = 10;
   const { user } = useAuth();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchJobs();
+  const fetchJobs = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, [user, page]);
 
-  const fetchJobs = async () => {
-    if (!user) return;
     try {
       setLoading(true);
+      setError(null);
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
@@ -65,10 +64,15 @@ export default function HistoryPage() {
       setHasMore((data?.length || 0) === ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching jobs:", error);
+      setError("Failed to load your design history. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, page, supabase]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -90,11 +94,49 @@ export default function HistoryPage() {
       : text;
   };
 
+  const handleRetry = () => {
+    setError(null);
+    setPage(1);
+    fetchJobs();
+  };
+
   if (loading && page === 1) {
     return (
       <div className="space-y-4">
         <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
         <div className="h-64 bg-gray-200 rounded animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Generation History
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              View your past design generations
+            </p>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="text-center py-8 sm:py-12">
+            <div className="space-y-4">
+              <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+              <h3 className="text-lg font-semibold">Unable to load history</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {error}
+              </p>
+              <Button onClick={handleRetry} size="sm">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
