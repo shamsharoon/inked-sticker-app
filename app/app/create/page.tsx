@@ -23,9 +23,6 @@ import { Upload, Wand2, X } from "lucide-react";
 
 export default function CreatePage() {
   const [prompt, setPrompt] = useState("");
-  const [width, setWidth] = useState(300);
-  const [height, setHeight] = useState(300);
-  const [quantity, setQuantity] = useState(50);
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -65,8 +62,6 @@ export default function CreatePage() {
         },
         body: JSON.stringify({
           prompt,
-          // Note: we are no longer sending orderId, width, height, etc.
-          // The new API route only needs the prompt to create a job.
         }),
       });
 
@@ -139,68 +134,10 @@ export default function CreatePage() {
               </Label>
               <Textarea
                 id="prompt"
-                placeholder="Describe your sticker design in detail... (e.g., 'A cute cartoon cat wearing sunglasses with a rainbow background')"
+                placeholder="Describe your sticker design in detail..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={4}
-                required
-                className="text-sm sm:text-base border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="width"
-                  className="text-sm sm:text-base text-slate-700 dark:text-slate-300"
-                >
-                  Width (px)
-                </Label>
-                <Input
-                  id="width"
-                  type="number"
-                  min="100"
-                  max="1000"
-                  value={width}
-                  onChange={(e) => setWidth(Number(e.target.value))}
-                  required
-                  className="text-sm sm:text-base border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="height"
-                  className="text-sm sm:text-base text-slate-700 dark:text-slate-300"
-                >
-                  Height (px)
-                </Label>
-                <Input
-                  id="height"
-                  type="number"
-                  min="100"
-                  max="1000"
-                  value={height}
-                  onChange={(e) => setHeight(Number(e.target.value))}
-                  required
-                  className="text-sm sm:text-base border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="quantity"
-                className="text-sm sm:text-base text-slate-700 dark:text-slate-300"
-              >
-                Quantity
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                max="1000"
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
                 required
                 className="text-sm sm:text-base border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
               />
@@ -212,8 +149,12 @@ export default function CreatePage() {
                 className="text-sm sm:text-base text-slate-700 dark:text-slate-300"
               >
                 Reference Images (Optional)
+                {/* TODO: #13 Allow image upload for the prompt */}
               </Label>
-              <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 sm:p-6 text-center bg-slate-50 dark:bg-slate-800/50">
+              <div
+                className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 sm:p-6 text-center bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors"
+                onClick={() => document.getElementById("files")?.click()}
+              >
                 <Upload className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 text-slate-400 dark:text-slate-500" />
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-2">
                   Upload images to help guide the AI generation
@@ -226,14 +167,6 @@ export default function CreatePage() {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById("files")?.click()}
-                  className="text-sm sm:text-base border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  Choose Files
-                </Button>
               </div>
 
               {files.length > 0 && (
