@@ -6,6 +6,7 @@ import {
   SettingsIcon,
   BrushIcon,
   HistoryIcon,
+  UserIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -22,10 +23,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  user: {
-    name: "shams haroon",
-    email: "shamsharoon7@gmail.com",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -40,6 +37,11 @@ const data = {
     },
   ],
   navSecondary: [
+    {
+      title: "Profile",
+      url: "/app/profile",
+      icon: UserIcon,
+    },
     {
       title: "Settings",
       url: "/app/settings",
@@ -73,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );
