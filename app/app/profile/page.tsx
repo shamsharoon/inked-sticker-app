@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "@/hooks/use-profile";
+import { useProfile } from "@/contexts/profile-context";
 import { EditProfile } from "@/components/ui/edit-profile";
 import { Button } from "@/components/ui/button";
 import {

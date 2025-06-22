@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { useProfile } from "@/hooks/use-profile";
+import { useProfile } from "@/contexts/profile-context";
 import { EditProfile } from "@/components/ui/edit-profile";
 
 export function NavUser() {
