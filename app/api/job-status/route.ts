@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const { data: job, error } = await supabase
     .from("jobs")
-    .select("status, result_url, error_msg")
+    .select("status, result_url, error_msg, prompt")
     .eq("id", jobId)
     .single();
 
