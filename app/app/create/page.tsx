@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -263,9 +264,9 @@ export default function CreatePage() {
               )}
             </div>
 
-            <Button
+            <GradientButton
               type="submit"
-              className="w-full text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full text-sm sm:text-base"
               disabled={loading}
             >
               {loading ? (
@@ -279,7 +280,7 @@ export default function CreatePage() {
                   Generate Designs
                 </>
               )}
-            </Button>
+            </GradientButton>
           </form>
         </CardContent>
       </Card>
