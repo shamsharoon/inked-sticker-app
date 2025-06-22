@@ -30,6 +30,7 @@ export default function ResultsPage() {
         status: "error",
         error_msg: "No job ID provided. Please go back and try again.",
       });
+      setLoading(false);
       return;
     }
 
@@ -42,6 +43,9 @@ export default function ResultsPage() {
 
         if (!isCancelled) {
           setJob(data);
+          setLoading(false);
+
+          // Continue polling only if job is not complete or error
           if (data.status !== "complete" && data.status !== "error") {
             setTimeout(pollJobStatus, 2000);
           }
@@ -52,6 +56,7 @@ export default function ResultsPage() {
             status: "error",
             error_msg: "Failed to connect to the server.",
           });
+          setLoading(false);
         }
       }
     };
