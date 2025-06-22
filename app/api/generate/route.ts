@@ -98,11 +98,10 @@ async function generateDesigns(
       prompt +
       ". The design should be: 1) Vector-style with clean lines and shapes, 2) Highly detailed while maintaining visual clarity, 3) Suitable for sticker printing with well-defined edges, 4) Cohesive and balanced composition, 5) Using colors that work well together and create visual impact, 6) Incorporating any specific elements mentioned in the prompt while ensuring they fit the sticker format. The final design should be a single, self-contained image that would look appealing when printed as a sticker.";
 
-    // 2. Generate image using OpenAI
+    // 2. Generate image using OpenAI GPT-Image-1
     const response = await openai.images.generate({
-      model: "dall-e-3",
+      model: "gpt-image-1",
       prompt: systemPrompt,
-      response_format: "b64_json",
     });
 
     if (!response.data?.[0]?.b64_json) {
@@ -126,7 +125,7 @@ async function generateDesigns(
       supabase.from("designs").insert({
         order_id: orderId,
         image_url: publicUrl,
-        openai_image_id: `dalle3_${Date.now()}`,
+        openai_image_id: `gpt-image-1_${Date.now()}`,
       }),
       supabase.from("orders").update({ status: "completed" }).eq("id", orderId),
     ]);
