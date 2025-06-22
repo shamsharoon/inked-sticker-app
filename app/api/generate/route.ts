@@ -14,12 +14,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface ImageGenerationResponse {
-  data: Array<{
-    b64_json: string;
-  }>;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json(); // Accept only prompt

@@ -50,7 +50,7 @@ export default function ResultsPage() {
             setTimeout(pollJobStatus, 2000);
           }
         }
-      } catch (error) {
+      } catch {
         if (!isCancelled) {
           setJob({
             status: "error",
@@ -81,7 +81,7 @@ export default function ResultsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to download image.",

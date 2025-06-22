@@ -2,12 +2,10 @@
 
 import * as React from "react";
 import {
-  BoxIcon,
   LayoutDashboardIcon,
   SettingsIcon,
   BrushIcon,
   HistoryIcon,
-  PlusCircleIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
