@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ModeToggle } from "./mode-toggle";
+import { GradientButton } from "@/components/ui/gradient-button";
 
 export function NavMain({
   items,
@@ -24,16 +25,18 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
+            <GradientButton
               asChild
-              tooltip="Create Order"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              className="flex-1 justify-start min-w-0 whitespace-nowrap text-sm px-4 py-2 h-9"
             >
-              <a href="/app/create">
-                <PlusCircleIcon />
-                <span>Create Order</span>
+              <a
+                href="/app/create"
+                className="flex items-center justify-start gap-2"
+              >
+                <PlusCircleIcon className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Create Order</span>
               </a>
-            </SidebarMenuButton>
+            </GradientButton>
             <div className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0">
               <ModeToggle />
             </div>

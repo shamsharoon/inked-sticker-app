@@ -9,16 +9,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function SectionCards() {
+export function SectionCards({ data }: { data: any[] }) {
   return (
     <div className="*:data-[slot=card]:shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2 sm:px-4 lg:px-6 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card">
       <Card className="@container/card">
         <CardHeader className="relative pb-2 sm:pb-4">
           <CardDescription className="text-xs sm:text-sm">
-            Total Revenue
+            Total Designs
           </CardDescription>
           <CardTitle className="text-xl sm:text-2xl @[250px]/card:text-3xl font-semibold tabular-nums">
-            $1,250.00
+            {data.length}
           </CardTitle>
           <div className="absolute right-3 sm:right-4 top-3 sm:top-4">
             <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
