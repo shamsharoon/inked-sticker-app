@@ -25,7 +25,6 @@ const data = {
   user: {
     name: "shams haroon",
     email: "shamsharoon7@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
     {
